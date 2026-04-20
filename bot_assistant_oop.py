@@ -117,6 +117,8 @@ def input_error(func):
             return str(e)
         except KeyError:
             return "Contact not found"
+        except AttributeError:
+            return "Contact not found"
     return inner
 
 #commands handlers
@@ -135,11 +137,8 @@ def add_contact(args, book):
 
 @input_error
 def change_contact(args, book):
-    name, old_phone, new_phone = args[0], args[1], args[2]
+    name, old_phone, new_phone, *_ = args
     record = book.find(name)
-
-    if record is None:
-        return "Contact not found"
     record.edit_phone(old_phone, new_phone)
     return "Contact updated."
 
@@ -147,8 +146,6 @@ def change_contact(args, book):
 def show_contact(args, book):
     name = args[0]
     record = book.find(name)
-    if record is None:
-        return "Contact not found"
     return "; ".join(phone.value for phone in record.phones)
 
 @input_error
@@ -159,9 +156,7 @@ def show_all_contacts(args, book):
 def show_birthday(args, book):
     name = args[0]
     record = book.find(name)
-    if record is None:
-        return "Contact not found"
-    elif not record.birthday:
+    if not record.birthday:
         return "Birthday not set"
     else:
         return record.birthday.value
@@ -171,10 +166,8 @@ def show_birthday(args, book):
 def add_birthday(args, book):
     name, birthday = args[0], args[1]
     record = book.find(name)
-    if record is None:
-        return "Contact not found"
 
-    elif record.birthday:
+    if record.birthday:
         return "Birthday is already set"
 
     record.add_birthday(birthday)
@@ -198,7 +191,11 @@ def main():
 
     while True:
         user_input = input("Enter your command: ")
+        if not user_input.strip():
+            print("Please enter a command.")
+            continue
         command, args = parse_input(user_input)
+
 
         if command in ["close", "exit"]:
             print("Goodbye!")
@@ -228,7 +225,7 @@ def main():
         elif command == "birthdays":
             print(birthdays(args, book))
 
-        if command == "help":
+        elif command == "help":
             print("=" * 40)
             print("🤖 COMMAND GUIDE")
             print("=" * 40)
